@@ -28,8 +28,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *************************************************************************/
 
-#ifndef FLANN_NNINDEX_H
-#define FLANN_NNINDEX_H
+#ifndef OPENCV_FLANN_NNINDEX_H
+#define OPENCV_FLANN_NNINDEX_H
 
 #include <string>
 
@@ -58,6 +58,11 @@ public:
      * \brief Builds the index
      */
     virtual void buildIndex() = 0;
+
+    /**
+     * \brief implementation for algorithms of addable indexes after that.
+     */
+    virtual void addIndex(const Matrix<ElementType>& wholeData, const Matrix<ElementType>& additionalData) = 0;
 
     /**
      * \brief Perform k-nearest neighbor search
@@ -114,12 +119,12 @@ public:
         int* indices_ptr = NULL;
         DistanceType* dists_ptr = NULL;
         if (indices.cols > 0) {
-            n = indices.cols;
+            n = (int)indices.cols;
             indices_ptr = indices[0];
             dists_ptr = dists[0];
         }
 
-        RadiusUniqueResultSet<DistanceType> resultSet(radius);
+        RadiusUniqueResultSet<DistanceType> resultSet((DistanceType)radius);
         resultSet.clear();
         findNeighbors(resultSet, query[0], params);
         if (n>0) {
@@ -127,7 +132,7 @@ public:
             else resultSet.copy(indices_ptr, dists_ptr, n);
         }
 
-        return resultSet.size();
+        return (int)resultSet.size();
     }
 
     /**
@@ -176,4 +181,4 @@ public:
 
 }
 
-#endif //FLANN_NNINDEX_H
+#endif //OPENCV_FLANN_NNINDEX_H

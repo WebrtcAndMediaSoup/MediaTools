@@ -28,8 +28,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *************************************************************************/
 
-#ifndef FLANN_BASE_HPP_
-#define FLANN_BASE_HPP_
+#ifndef OPENCV_FLANN_BASE_HPP_
+#define OPENCV_FLANN_BASE_HPP_
 
 #include <vector>
 #include <string>
@@ -122,6 +122,16 @@ public:
     ~Index()
     {
         delete nnIndex_;
+    }
+
+    /**
+    * implementation for algorithms of addable indexes after that.
+    */
+    void addIndex(const Matrix<ElementType>& wholeData, const Matrix<ElementType>& additionalData)
+    {
+        if (!loaded_) {
+            nnIndex_->addIndex(wholeData, additionalData);
+        }
     }
 
     /**
@@ -288,4 +298,4 @@ int hierarchicalClustering(const Matrix<typename Distance::ElementType>& points,
 }
 
 }
-#endif /* FLANN_BASE_HPP_ */
+#endif /* OPENCV_FLANN_BASE_HPP_ */

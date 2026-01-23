@@ -56,7 +56,7 @@ namespace cvflann
 
 struct LshIndexParams : public IndexParams
 {
-    LshIndexParams(unsigned int table_number, unsigned int key_size, unsigned int multi_probe_level)
+    LshIndexParams(unsigned int table_number = 12, unsigned int key_size = 20, unsigned int multi_probe_level = 2)
     {
         (* this)["algorithm"] = FLANN_INDEX_LSH;
         // The number of hash tables to use
@@ -90,11 +90,13 @@ public:
              Distance d = Distance()) :
         dataset_(input_data), index_params_(params), distance_(d)
     {
-        table_number_ = get_param<unsigned int>(index_params_,"table_number",12);
-        key_size_ = get_param<unsigned int>(index_params_,"key_size",20);
-        multi_probe_level_ = get_param<unsigned int>(index_params_,"multi_probe_level",2);
+        // cv::flann::IndexParams sets integer params as 'int', so it is used with get_param
+        // in place of 'unsigned int'
+        table_number_ = (unsigned int)get_param<int>(index_params_,"table_number",12);
+        key_size_ = (unsigned int)get_param<int>(index_params_,"key_size",20);
+        multi_probe_level_ = (unsigned int)get_param<int>(index_params_,"multi_probe_level",2);
 
-        feature_size_ = dataset_.cols;
+        feature_size_ = (unsigned)dataset_.cols;
         fill_xor_mask(0, key_size_, multi_probe_level_, xor_masks_);
     }
 
@@ -103,17 +105,45 @@ public:
     LshIndex& operator=(const LshIndex&);
 
     /**
-     * Builds the index
-     */
-    void buildIndex()
+    * Implementation for the LSH addable indexes after that.
+    * @param wholeData whole dataset with the input features
+    * @param additionalData additional dataset with the input features
+    */
+    void addIndex(const Matrix<ElementType>& wholeData, const Matrix<ElementType>& additionalData)
     {
         tables_.resize(table_number_);
         for (unsigned int i = 0; i < table_number_; ++i) {
             lsh::LshTable<ElementType>& table = tables_[i];
-            table = lsh::LshTable<ElementType>(feature_size_, key_size_);
+            // Add the features to the table with indexed offset
+            table.add((int)(wholeData.rows - additionalData.rows), additionalData);
+        }
+        dataset_ = wholeData;
+    }
 
-            // Add the features to the table
-            table.add(dataset_);
+    /**
+     * Builds the index
+     */
+    void buildIndex()
+    {
+        std::vector<size_t> indices(feature_size_ * CHAR_BIT);
+
+        tables_.resize(table_number_);
+        for (unsigned int i = 0; i < table_number_; ++i) {
+
+            //re-initialize the random indices table that the LshTable will use to pick its sub-dimensions
+            if( (indices.size() == feature_size_ * CHAR_BIT) || (indices.size() < key_size_) )
+            {
+              indices.resize( feature_size_ * CHAR_BIT );
+              for (size_t j = 0; j < feature_size_ * CHAR_BIT; ++j)
+                  indices[j] = j;
+              std::random_shuffle(indices.begin(), indices.end());
+            }
+
+            lsh::LshTable<ElementType>& table = tables_[i];
+            table = lsh::LshTable<ElementType>(feature_size_, key_size_, indices);
+
+            // Add the features to the table with offset 0
+            table.add(0, dataset_);
         }
     }
 
@@ -168,7 +198,7 @@ public:
      */
     int usedMemory() const
     {
-        return dataset_.rows * sizeof(int);
+        return (int)(dataset_.rows * sizeof(int));
     }
 
 
@@ -197,6 +227,8 @@ public:
         KNNUniqueResultSet<DistanceType> resultSet(knn);
         for (size_t i = 0; i < queries.rows; i++) {
             resultSet.clear();
+            std::fill_n(indices[i], knn, -1);
+            std::fill_n(dists[i], knn, std::numeric_limits<DistanceType>::max());
             findNeighbors(resultSet, queries[i], params);
             if (get_param(params,"sorted",true)) resultSet.sortAndCopy(indices[i], dists[i], knn);
             else resultSet.copy(indices[i], dists[i], knn);
@@ -256,8 +288,8 @@ private:
      * @param k_nn the number of nearest neighbors
      * @param checked_average used for debugging
      */
-    void getNeighbors(const ElementType* vec, bool do_radius, float radius, bool do_k, unsigned int k_nn,
-                      float& checked_average)
+    void getNeighbors(const ElementType* vec, bool /*do_radius*/, float radius, bool do_k, unsigned int k_nn,
+                      float& /*checked_average*/)
     {
         static std::vector<ScoreIndexPair> score_index_heap;
 
@@ -342,7 +374,7 @@ private:
             std::vector<lsh::BucketKey>::const_iterator xor_mask_end = xor_masks_.end();
             for (; xor_mask != xor_mask_end; ++xor_mask) {
                 size_t sub_key = key ^ (*xor_mask);
-                const lsh::Bucket* bucket = table->getBucketFromKey(sub_key);
+                const lsh::Bucket* bucket = table->getBucketFromKey((lsh::BucketKey)sub_key);
                 if (bucket == 0) continue;
 
                 // Go over each descriptor index
@@ -353,7 +385,7 @@ private:
                 // Process the rest of the candidates
                 for (; training_index < last_training_index; ++training_index) {
                     // Compute the Hamming distance
-                    hamming_distance = distance_(vec, dataset_[*training_index], dataset_.cols);
+                    hamming_distance = distance_(vec, dataset_[*training_index], (int)dataset_.cols);
                     result.addPoint(hamming_distance, *training_index);
                 }
             }
