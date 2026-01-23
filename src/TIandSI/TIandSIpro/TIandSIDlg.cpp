@@ -2,17 +2,17 @@
  * TIandSIpro
  * (TIandSI Professional)
  *
- * À×Ïöæè Lei Xiaohua
+ * é›·éœ„éª… Lei Xiaohua
  * leixiaohua1020@126.com
- * ÖĞ¹ú´«Ã½´óÑ§/Êı×ÖµçÊÓ¼¼Êõ
+ * ä¸­å›½ä¼ åª’å¤§å­¦/æ•°å­—ç”µè§†æŠ€æœ¯
  * Communication University of China / Digital TV Technology
  * http://blog.csdn.net/leixiaohua1020
  * 
- * ±¾¹¤³Ì¿ÉÒÔ¼ÆËãÒ»¸öÑ¹ËõÊÓÆµµÄÊ±¼äĞÅÏ¢TI£¨Temporal perceptual Information£¬
- * Ò²¿ÉÒÔ³ÆÊ±¼ä¸´ÔÓ¶È£©ºÍ¿Õ¼äĞÅÏ¢SI£¨Spatial perceptual Information£¬Ò²¿ÉÒÔ
- * ³Æ¿Õ¼ä¸´ÔÓ¶È£©¡£¼ÆËã·½·¨³ö×Ô±ê×¼£ºITU-R BT.1788
+ * æœ¬å·¥ç¨‹å¯ä»¥è®¡ç®—ä¸€ä¸ªå‹ç¼©è§†é¢‘çš„æ—¶é—´ä¿¡æ¯TIï¼ˆTemporal perceptual Informationï¼Œ
+ * ä¹Ÿå¯ä»¥ç§°æ—¶é—´å¤æ‚åº¦ï¼‰å’Œç©ºé—´ä¿¡æ¯SIï¼ˆSpatial perceptual Informationï¼Œä¹Ÿå¯ä»¥
+ * ç§°ç©ºé—´å¤æ‚åº¦ï¼‰ã€‚è®¡ç®—æ–¹æ³•å‡ºè‡ªæ ‡å‡†ï¼šITU-R BT.1788
  *
- * Professional: Ö§³ÖÑ¹ËõÂëÁ÷£¨¶ø²»ÊÇÏñËØÊı¾İ±ÈÈçYUV£¬RGB£©×÷ÎªÊäÈë
+ * Professional: æ”¯æŒå‹ç¼©ç æµï¼ˆè€Œä¸æ˜¯åƒç´ æ•°æ®æ¯”å¦‚YUVï¼ŒRGBï¼‰ä½œä¸ºè¾“å…¥
  *
  * This software can calculate a video bitstream's TI(Temporal perceptual Information) 
  * and SI(Spatial perceptual Information) according to ITU-R BT.1788.
@@ -35,20 +35,20 @@
 
 
 
-// ÓÃÓÚÓ¦ÓÃ³ÌĞò¡°¹ØÓÚ¡±²Ëµ¥ÏîµÄ CAboutDlg ¶Ô»°¿ò
+// ç”¨äºåº”ç”¨ç¨‹åºâ€œå…³äºâ€èœå•é¡¹çš„ CAboutDlg å¯¹è¯æ¡†
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-// ¶Ô»°¿òÊı¾İ
+// å¯¹è¯æ¡†æ•°æ®
 	enum { IDD = IDD_ABOUTBOX };
 
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV æ”¯æŒ
 
-// ÊµÏÖ
+// å®ç°
 protected:
 	DECLARE_MESSAGE_MAP()
 public:
@@ -69,7 +69,7 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CTIandSIDlg ¶Ô»°¿ò
+// CTIandSIDlg å¯¹è¯æ¡†
 
 
 
@@ -114,15 +114,15 @@ ON_COMMAND(ID_URLLIST_QUICKADD, &CTIandSIDlg::OnUrllistQuickadd)
 END_MESSAGE_MAP()
 
 
-// CTIandSIDlg ÏûÏ¢´¦Àí³ÌĞò
+// CTIandSIDlg æ¶ˆæ¯å¤„ç†ç¨‹åº
 
 BOOL CTIandSIDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// ½«¡°¹ØÓÚ...¡±²Ëµ¥ÏîÌí¼Óµ½ÏµÍ³²Ëµ¥ÖĞ¡£
+	// å°†â€œå…³äº...â€èœå•é¡¹æ·»åŠ åˆ°ç³»ç»Ÿèœå•ä¸­ã€‚
 
-	// IDM_ABOUTBOX ±ØĞëÔÚÏµÍ³ÃüÁî·¶Î§ÄÚ¡£
+	// IDM_ABOUTBOX å¿…é¡»åœ¨ç³»ç»Ÿå‘½ä»¤èŒƒå›´å†…ã€‚
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
@@ -140,16 +140,16 @@ BOOL CTIandSIDlg::OnInitDialog()
 		}
 	}
 
-	// ÉèÖÃ´Ë¶Ô»°¿òµÄÍ¼±ê¡£µ±Ó¦ÓÃ³ÌĞòÖ÷´°¿Ú²»ÊÇ¶Ô»°¿òÊ±£¬¿ò¼Ü½«×Ô¶¯
-	//  Ö´ĞĞ´Ë²Ù×÷
-	SetIcon(m_hIcon, TRUE);			// ÉèÖÃ´óÍ¼±ê
-	SetIcon(m_hIcon, FALSE);		// ÉèÖÃĞ¡Í¼±ê
+	// è®¾ç½®æ­¤å¯¹è¯æ¡†çš„å›¾æ ‡ã€‚å½“åº”ç”¨ç¨‹åºä¸»çª—å£ä¸æ˜¯å¯¹è¯æ¡†æ—¶ï¼Œæ¡†æ¶å°†è‡ªåŠ¨
+	//  æ‰§è¡Œæ­¤æ“ä½œ
+	SetIcon(m_hIcon, TRUE);			// è®¾ç½®å¤§å›¾æ ‡
+	SetIcon(m_hIcon, FALSE);		// è®¾ç½®å°å›¾æ ‡
 	//---------------
 	
 	m_output.SetCheck(TRUE);
 
 	UpdateData(FALSE);
-	//³õÊ¼»¯
+	//åˆå§‹åŒ–
 	m_progressalltext.SetWindowText(L"0%");
 	m_progresscurtext.SetWindowText(L"0%");
 	m_progressall.SetRange(0,100);
@@ -157,10 +157,10 @@ BOOL CTIandSIDlg::OnInitDialog()
 
 	//SDL==========================
 	sdlparam.graphically==true;
-	//SDL_putenv()·ÅÔÚÇ°Ãæ
+	//SDL_putenv()æ”¾åœ¨å‰é¢
 	char variable[256];   
-	CWnd* pWnd = GetDlgItem(IDC_SCREEN);  //»ñÈ¡Í¼Æ¬¿Ø¼şµÄ´°¿ÚÖ¸Õë   
-	sprintf(variable,"SDL_WINDOWID=0x%1x",pWnd->GetSafeHwnd()); // ¸ñÊ½»¯×Ö·û´®      
+	CWnd* pWnd = GetDlgItem(IDC_SCREEN);  //è·å–å›¾ç‰‡æ§ä»¶çš„çª—å£æŒ‡é’ˆ   
+	sprintf(variable,"SDL_WINDOWID=0x%1x",pWnd->GetSafeHwnd()); // æ ¼å¼åŒ–å­—ç¬¦ä¸²      
 	SDL_putenv(variable); 
 
 	if(SDL_Init(SDL_INIT_VIDEO)) {
@@ -187,13 +187,13 @@ BOOL CTIandSIDlg::OnInitDialog()
 
 	m_draw.InsertString(0,L"SI");
 	m_draw.InsertString(1,L"TI");
-	m_draw.InsertString(2,L"²»ÏÔÊ¾");
+	m_draw.InsertString(2,L"Yuv");
 	m_draw.SetCurSel(0);
 
 	SetState(SYSTEM_PREPARE);
 	//=============================
 
-	return TRUE;  // ³ı·Ç½«½¹µãÉèÖÃµ½¿Ø¼ş£¬·ñÔò·µ»Ø TRUE
+	return TRUE;  // é™¤éå°†ç„¦ç‚¹è®¾ç½®åˆ°æ§ä»¶ï¼Œå¦åˆ™è¿”å› TRUE
 }
 
 void CTIandSIDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -209,19 +209,19 @@ void CTIandSIDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// Èç¹ûÏò¶Ô»°¿òÌí¼Ó×îĞ¡»¯°´Å¥£¬ÔòĞèÒªÏÂÃæµÄ´úÂë
-//  À´»æÖÆ¸ÃÍ¼±ê¡£¶ÔÓÚÊ¹ÓÃÎÄµµ/ÊÓÍ¼Ä£ĞÍµÄ MFC Ó¦ÓÃ³ÌĞò£¬
-//  Õâ½«ÓÉ¿ò¼Ü×Ô¶¯Íê³É¡£
+// å¦‚æœå‘å¯¹è¯æ¡†æ·»åŠ æœ€å°åŒ–æŒ‰é’®ï¼Œåˆ™éœ€è¦ä¸‹é¢çš„ä»£ç 
+//  æ¥ç»˜åˆ¶è¯¥å›¾æ ‡ã€‚å¯¹äºä½¿ç”¨æ–‡æ¡£/è§†å›¾æ¨¡å‹çš„ MFC åº”ç”¨ç¨‹åºï¼Œ
+//  è¿™å°†ç”±æ¡†æ¶è‡ªåŠ¨å®Œæˆã€‚
 
 void CTIandSIDlg::OnPaint()
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // ÓÃÓÚ»æÖÆµÄÉè±¸ÉÏÏÂÎÄ
+		CPaintDC dc(this); // ç”¨äºç»˜åˆ¶çš„è®¾å¤‡ä¸Šä¸‹æ–‡
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// Ê¹Í¼±êÔÚ¹¤×÷Çø¾ØĞÎÖĞ¾ÓÖĞ
+		// ä½¿å›¾æ ‡åœ¨å·¥ä½œåŒºçŸ©å½¢ä¸­å±…ä¸­
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
@@ -229,7 +229,7 @@ void CTIandSIDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// »æÖÆÍ¼±ê
+		// ç»˜åˆ¶å›¾æ ‡
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -238,14 +238,14 @@ void CTIandSIDlg::OnPaint()
 	}
 }
 
-//µ±ÓÃ»§ÍÏ¶¯×îĞ¡»¯´°¿ÚÊ±ÏµÍ³µ÷ÓÃ´Ëº¯ÊıÈ¡µÃ¹â±ê
-//ÏÔÊ¾¡£
+//å½“ç”¨æˆ·æ‹–åŠ¨æœ€å°åŒ–çª—å£æ—¶ç³»ç»Ÿè°ƒç”¨æ­¤å‡½æ•°å–å¾—å…‰æ ‡
+//æ˜¾ç¤ºã€‚
 HCURSOR CTIandSIDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-//½âÂëÊÓÆµ²¢ÇÒ¼ÆËã
+//è§£ç è§†é¢‘å¹¶ä¸”è®¡ç®—
 int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 {
 	CTIandSIDlg *dlg=(CTIandSIDlg *)lparam;;
@@ -322,12 +322,12 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 
 		AVPacket *packet=(AVPacket *)av_malloc(sizeof(AVPacket));
 		av_new_packet(packet, y_size);
-		//¼ÆËãTIµÄÊ±ºòÊ¹ÓÃ
+		//è®¡ç®—TIçš„æ—¶å€™ä½¿ç”¨
 		int prev_has=0;
 		uint8_t *prev_ydata=(uint8_t *)av_malloc(pCodecCtx->width*pCodecCtx->height);
 
 		img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, PIX_FMT_YUV420P, SWS_BILINEAR, NULL, NULL, NULL); 
-		//´ò¿ªÊä³öÎÄ¼ş
+		//æ‰“å¼€è¾“å‡ºæ–‡ä»¶
 		FILE *fp=NULL;
 		if(dlg->m_output.GetCheck()==TRUE){
 			fp=fopen(out_url,"wb+");
@@ -339,9 +339,9 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 		//Bar
 		dlg->m_progresscur.SetPos(0);
 		dlg->m_progresscurtext.SetWindowText(L" 0%");
-		//¼Ç¸öÊı
+		//è®°ä¸ªæ•°
 		int framecnt=0;
-		//Î¢Ãë
+		//å¾®ç§’
 		int ptime=0;
 		while(av_read_frame(pFormatCtx, packet)>=0)
 		{
@@ -356,7 +356,7 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 				if(got_picture)
 				{
 					sws_scale(img_convert_ctx, (const uint8_t* const*)pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameYUV->data, pFrameYUV->linesize);
-					//ÓĞÇ°ÃæµÄÖ¡£¬²ÅÄÜ¼ÆËãTI
+					//æœ‰å‰é¢çš„å¸§ï¼Œæ‰èƒ½è®¡ç®—TI
 					if(prev_has==1){
 						float ti=0,si=0;
 						int retval=TIandSICal(dlg,(char *)pFrameYUV->data[0],(char *)prev_ydata,pCodecCtx->width,pCodecCtx->height,sdlparam,ti,si);
@@ -386,7 +386,7 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 					}else{
 						prev_has=1;
 					}
-					//¿½±´ÁÁ¶ÈÊı¾İ
+					//æ‹·è´äº®åº¦æ•°æ®
 					memcpy(prev_ydata,pFrameYUV->data[0],pCodecCtx->width*pCodecCtx->height);
 				}
 			}
@@ -401,7 +401,7 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 		dlg->m_progresscur.SetPos(100);
 		dlg->m_progresscurtext.SetWindowText(L"100%");
 
-		//ÎÄ¼şÃû
+		//æ–‡ä»¶å
 		CString in_url1,filename;
 		in_url1.Format(L"%s",A2W(in_url));
 		int nPos=in_url1.ReverseFind('\\');   
@@ -412,7 +412,7 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 		resulttistr.AppendFormat(L"\r\n=======\r\n");
 		resultsistr.AppendFormat(L"\r\n=======\r\n");
 
-		//¼ÆËãÆ½¾ùÖµ
+		//è®¡ç®—å¹³å‡å€¼
 		int num=0;
 		float sum=0;
 		num=silist.size();
@@ -454,7 +454,7 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 }
 
 
-//¼ÆËãTI¡¢SI
+//è®¡ç®—TIã€SI
 int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width,int height,SDLParam sdlparam,float &ti,float &si)
 {
 	CTIandSIDlg *dlg=(CTIandSIDlg *)lparam;;
@@ -484,7 +484,7 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 	if(dlg->sysstate==SYSTEM_PREPARE){
 		return -1;
 	}
-	/****************³õÊ¼»¯ÉèÖÃ**********************/
+	/****************åˆå§‹åŒ–è®¾ç½®**********************/
 	nHeight = height;
 	nWidth = width;
 	nYSize = nHeight*nWidth;
@@ -509,7 +509,7 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 
 	int nUVSize=nYSize/2;
 	
-	//UV£¬»æÍ¼ÓÃ
+	//UVï¼Œç»˜å›¾ç”¨
 	NewUVBuffer= new unsigned char[nUVSize];
 	memset(NewUVBuffer, 0x80, nUVSize);
 
@@ -517,7 +517,16 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 	NewSIBuffer = new float [nYSize];
 	NewTIBuffer = new float [nYSize];
 
-	/********************¼ÆËãSI***********************/
+	if (dlg->m_draw.GetCurSel() == 2)//show yuv
+	{
+		SDL_LockYUVOverlay(dlg->sdlparam.bmp);
+		//TODO:
+
+		SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);
+		SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect);
+	}
+
+	/********************è®¡ç®—SI***********************/
 	memcpy(pFrame,ydata,nYSize);
 
 	for(j = 0; j < nHeight; j++)
@@ -557,7 +566,7 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 				YSobel = pFrame2D[j-1][i-1] + 3*pFrame2D[j-1][i]
 				-pFrame2D[j][i-1] - 3*pFrame2D[j][i];
 			}
-			else if(j == 0)//ÉÏÃæÒ»ÅÅ
+			else if(j == 0)//ä¸Šé¢ä¸€æ’
 			{
 				XSobel = -3*pFrame2D[0][i-1] + 3*pFrame2D[0][i+1]
 				-pFrame2D[j+1][i-1] + pFrame2D[j+1][i+1];
@@ -565,7 +574,7 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 				YSobel = pFrame2D[0][i-1] + 2*pFrame2D[0][i] + pFrame2D[0][i+1]
 				-pFrame2D[j+1][i-1] - 2*pFrame2D[j+1][i] - pFrame2D[j+1][i+1];
 			}
-			else if(j == (nHeight - 1))//ÏÂÃæÒ»ÅÅ
+			else if(j == (nHeight - 1))//ä¸‹é¢ä¸€æ’
 			{
 				XSobel = -pFrame2D[j-1][i-1] + pFrame2D[j-1][i+1]
 				-3*pFrame2D[j][i-1] + 3*pFrame2D[j][i+1];
@@ -573,7 +582,7 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 				YSobel = pFrame2D[j-1][i-1] + 2*pFrame2D[j-1][i] + pFrame2D[j-1][i+1]
 				-pFrame2D[j][i-1] - 2*pFrame2D[j][i] - pFrame2D[j][i+1];
 			}
-			else if(i == 0)//×ó±ßÒ»ÅÅ
+			else if(i == 0)//å·¦è¾¹ä¸€æ’
 			{
 				XSobel = -pFrame2D[j-1][0] + pFrame2D[j-1][i+1]
 				-2*pFrame2D[j][0] + 2*pFrame2D[j][i+1]				
@@ -582,7 +591,7 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 				YSobel = 3*pFrame2D[j-1][0] + pFrame2D[j-1][i+1]
 				-3*pFrame2D[j+1][0] - pFrame2D[j+1][i+1];
 			}
-			else if(i == (nWidth - 1))//ÓÒÃæÒ»ÅÅ
+			else if(i == (nWidth - 1))//å³é¢ä¸€æ’
 			{
 				XSobel = -pFrame2D[j-1][i-1] + pFrame2D[j-1][i]
 				-2*pFrame2D[j][i-1] + 2*pFrame2D[j][i]				
@@ -607,85 +616,87 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 			NewSIBuffer[j*nWidth + i] = SobelValue;
 		}
 
-		for(m = 1; m < (nHeight - 1); m++)
-			for(n = 1; n < (nWidth - 1); n++)
-			{
-				flSI_A = flSI_A + NewSIBuffer[m*nWidth + n];
-			}
-		flSI_A = flSI_A/((nWidth - 2)*(nHeight - 2));
+	for (m = 1; m < (nHeight - 1); m++)
+		for (n = 1; n < (nWidth - 1); n++)
+		{
+			flSI_A = flSI_A + NewSIBuffer[m * nWidth + n];
+		}
+	flSI_A = flSI_A / ((nWidth - 2) * (nHeight - 2));
 
-		for(m = 1; m < (nHeight - 1); m++)
-			for(n = 1; n < (nWidth - 1); n++)
-			{
-				flSI_S = flSI_S + pow((NewSIBuffer[m*nWidth+n]-flSI_A), 2);
-			}
-		flSI_S = sqrt(flSI_S/((nWidth - 2)*(nHeight - 2) - 1));
-		//Êä³öSI
-		//printf("SI(%d) : %.3f\n",k+1,flSI_S);
-		si=flSI_S;
-		//»­Í¼
-		if(dlg->m_draw.GetCurSel()==0){
+	for (m = 1; m < (nHeight - 1); m++)
+		for (n = 1; n < (nWidth - 1); n++)
+		{
+			flSI_S = flSI_S + pow((NewSIBuffer[m * nWidth + n] - flSI_A), 2);
+		}
+	flSI_S = sqrt(flSI_S / ((nWidth - 2) * (nHeight - 2) - 1));
+	// è¾“å‡ºSI
+	// printf("SI(%d) : %.3f\n",k+1,flSI_S);
+	si = flSI_S;
+	// ç”»å›¾
+	if (dlg->m_draw.GetCurSel() == 0)
+	{
 
-			SDL_LockYUVOverlay(dlg->sdlparam.bmp);
-			dlg->sdlparam.bmp->pixels[0]=NewYBuffer;
-			dlg->sdlparam.bmp->pixels[2]=NewUVBuffer;
-			dlg->sdlparam.bmp->pixels[1]=NewUVBuffer+nUVSize/2;     
-			dlg->sdlparam.bmp->pitches[0]=nWidth;
-			dlg->sdlparam.bmp->pitches[2]=nWidth/2;   
-			dlg->sdlparam.bmp->pitches[1]=nWidth/2;
-			SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);  
-			SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect); 
+		SDL_LockYUVOverlay(dlg->sdlparam.bmp);
+		dlg->sdlparam.bmp->pixels[0] = NewYBuffer;
+		dlg->sdlparam.bmp->pixels[2] = NewUVBuffer;
+		dlg->sdlparam.bmp->pixels[1] = NewUVBuffer + nUVSize / 2;
+		dlg->sdlparam.bmp->pitches[0] = nWidth;
+		dlg->sdlparam.bmp->pitches[2] = nWidth / 2;
+		dlg->sdlparam.bmp->pitches[1] = nWidth / 2;
+		SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);
+		SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect);
+	}
+
+	memcpy(pFrame, prev_ydata, nYSize);
+	memcpy(pNextFrame, ydata, nYSize);
+
+	for (j = 0; j < nHeight; j++)
+		for (i = 0; i < nWidth; i++)
+		{
+			NewTIBuffer[j * nWidth + i] = pNextFrame2D[j][i] - pFrame2D[j][i];
+			NewYBuffer[j * nWidth + i] = abs(pNextFrame2D[j][i] - pFrame2D[j][i]);
+
+			flTI_A = flTI_A + NewTIBuffer[j * nWidth + i];
 		}
 
-		memcpy(pFrame,prev_ydata,nYSize);
-		memcpy(pNextFrame,ydata,nYSize);
+	flTI_A = flTI_A / nYSize;
 
-		for(j = 0; j < nHeight; j++)
-			for(i = 0; i < nWidth; i++)
-			{
-				NewTIBuffer[j*nWidth + i] = pNextFrame2D[j][i] - pFrame2D[j][i];
-				NewYBuffer[j*nWidth + i] = abs(pNextFrame2D[j][i] - pFrame2D[j][i]);
-
-				flTI_A = flTI_A + NewTIBuffer[j*nWidth + i];
-			}
-
-		flTI_A = flTI_A/nYSize;
-
-		for(j = 0; j < nHeight; j++)
-			for(i = 0; i < nWidth; i++)
-			{
-				flTI_S = flTI_S + pow((NewTIBuffer[j*nWidth + i]-flTI_A), 2);
-			}
-
-		flTI_S = sqrt(flTI_S/(nYSize - 1));
-		//Êä³öTI
-		ti=flTI_S;
-
-		//»­Í¼
-		if(dlg->m_draw.GetCurSel()==1){
-
-			SDL_LockYUVOverlay(dlg->sdlparam.bmp);
-			dlg->sdlparam.bmp->pixels[0]=NewYBuffer;
-			dlg->sdlparam.bmp->pixels[2]=NewUVBuffer;
-			dlg->sdlparam.bmp->pixels[1]=NewUVBuffer+nUVSize/2;     
-			dlg->sdlparam.bmp->pitches[0]=nWidth;
-			dlg->sdlparam.bmp->pitches[2]=nWidth/2;   
-			dlg->sdlparam.bmp->pitches[1]=nWidth/2;
-			SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);  
-			SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect); 
+	for (j = 0; j < nHeight; j++)
+		for (i = 0; i < nWidth; i++)
+		{
+			flTI_S = flTI_S + pow((NewTIBuffer[j * nWidth + i] - flTI_A), 2);
 		}
 
-		delete []pFrame;
-		delete []pFrame2D;
-		delete []pNextFrame;
-		delete []pNextFrame2D;
-		delete []NewYBuffer;
-		delete []NewTIBuffer;
-		delete []NewSIBuffer;
+	flTI_S = sqrt(flTI_S / (nYSize - 1));
+	// è¾“å‡ºTI
+	ti = flTI_S;
 
-		delete []NewUVBuffer;
+	// ç”»å›¾
+	if (dlg->m_draw.GetCurSel() == 1)
+	{
 
-		return 0;
+		SDL_LockYUVOverlay(dlg->sdlparam.bmp);
+		dlg->sdlparam.bmp->pixels[0] = NewYBuffer;
+		dlg->sdlparam.bmp->pixels[2] = NewUVBuffer;
+		dlg->sdlparam.bmp->pixels[1] = NewUVBuffer + nUVSize / 2;
+		dlg->sdlparam.bmp->pitches[0] = nWidth;
+		dlg->sdlparam.bmp->pitches[2] = nWidth / 2;
+		dlg->sdlparam.bmp->pitches[1] = nWidth / 2;
+		SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);
+		SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect);
+	}
+
+	delete[] pFrame;
+	delete[] pFrame2D;
+	delete[] pNextFrame;
+	delete[] pNextFrame2D;
+	delete[] NewYBuffer;
+	delete[] NewTIBuffer;
+	delete[] NewSIBuffer;
+
+	delete[] NewUVBuffer;
+
+	return 0;
 }
 
 
@@ -695,7 +706,7 @@ UINT Thread_Process(LPVOID lpParam){
 
 	dlg->m_progressall.SetPos(0);
 	dlg->m_progressalltext.SetWindowText(L"0%");
-	//ÔØÈë
+	//è½½å…¥
 
 	dlg->SetState(SYSTEM_PROCESS);
 
@@ -720,23 +731,23 @@ UINT Thread_Process(LPVOID lpParam){
 
 	dlg->SetState(SYSTEM_PREPARE);
 
-	AfxMessageBox(L"´¦ÀíÍê±Ï£¡");
+	AfxMessageBox(L"å¤„ç†å®Œæ¯•ï¼");
 	return 0;
 }
 
 void CTIandSIDlg::OnBnClickedOk()
 {
-	//¸üĞÂ²ÎÊı
+	//æ›´æ–°å‚æ•°
 	UpdateData(TRUE);
-	// TODO: ÔÚ´ËÌí¼Ó¿Ø¼şÍ¨Öª´¦Àí³ÌĞò´úÂë
+	// TODO: åœ¨æ­¤æ·»åŠ æ§ä»¶é€šçŸ¥å¤„ç†ç¨‹åºä»£ç 
 	
 	if(urllist.size()<1){
-		AfxMessageBox(L"ÇëÔÚÁĞ±íÖĞÌí¼ÓÊÓÆµĞòÁĞ£¡");
+		AfxMessageBox(L"è¯·åœ¨åˆ—è¡¨ä¸­æ·»åŠ è§†é¢‘åºåˆ—ï¼");
 		return;
 	}
 	SystemClear();
 
-	pThreadProcess=AfxBeginThread(Thread_Process,this);//¿ªÆôÏß³Ì
+	pThreadProcess=AfxBeginThread(Thread_Process,this);//å¼€å¯çº¿ç¨‹
 
 }
 
@@ -744,12 +755,12 @@ void CTIandSIDlg::OnBnClickedOk()
 void CTIandSIDlg::OnBnClickedUrllistAdd()
 {
 	UpdateData(TRUE);
-	//»ñÈ¡µØÖ·¼ÓÈëÁĞ±í
+	//è·å–åœ°å€åŠ å…¥åˆ—è¡¨
 	CString url;
 	m_inputurl.GetWindowText(url);
 
 	if(url.IsEmpty()==TRUE){
-		AfxMessageBox(L"ÊäÈëµØÖ·Îª¿Õ£¡");
+		AfxMessageBox(L"è¾“å…¥åœ°å€ä¸ºç©ºï¼");
 		return;
 	}
 
@@ -761,12 +772,12 @@ void CTIandSIDlg::OnBnClickedUrllistAdd()
 
 void CTIandSIDlg::OnBnClickedUrllistDelete()
 {
-	//É¾³ıÔªËØ
+	//åˆ é™¤å…ƒç´ 
 	int urlindex=m_urllist.GetCurSel();
 	if(urlindex!=-1){
 	urllist.erase(urllist.begin()+urlindex);
 	}else{
-		AfxMessageBox(L"Ã»ÓĞÑ¡ÖĞÈÎºÎÔªËØ£¡");
+		AfxMessageBox(L"æ²¡æœ‰é€‰ä¸­ä»»ä½•å…ƒç´ ï¼");
 	}
 
 	RefreshUrllist();
@@ -776,20 +787,20 @@ void CTIandSIDlg::OnBnClickedUrllistDelete()
 void CTIandSIDlg::OnBnClickedUrllistDeleteall()
 {
 	if(urllist.size()==0){
-		AfxMessageBox(L"ÁĞ±íÒÑ¾­Îª¿Õ£¡");
+		AfxMessageBox(L"åˆ—è¡¨å·²ç»ä¸ºç©ºï¼");
 	}
-	//Çå¿ÕÔªËØ
+	//æ¸…ç©ºå…ƒç´ 
 	urllist.clear();
 	RefreshUrllist();
 }
 
 void CTIandSIDlg::RefreshUrllist(){
-	//ÖØĞÂÔØÈëÁĞ±í
+	//é‡æ–°è½½å…¥åˆ—è¡¨
 	m_urllist.ResetContent();
 	int i=0;
 	for(i=0;i<urllist.size();i++){
 		CString record;
-		//ÎÄ¼şÃû
+		//æ–‡ä»¶å
 		CString filename;
 		int nPos=urllist[i].ReverseFind('\\');   
 		filename=urllist[i].Mid(nPos+1);
@@ -828,11 +839,11 @@ void CTIandSIDlg::SetState(Systemstate state)
 		GetDlgItem(IDPAUSE)->EnableWindow(FALSE);
 		GetDlgItem(IDSTOP)->EnableWindow(FALSE);
 		GetDlgItem(IDC_URLLIST_ADD)->EnableWindow(TRUE);
-		GetDlgItem(IDPAUSE)->SetWindowText(L"ÔİÍ£");
+		GetDlgItem(IDPAUSE)->SetWindowText(L"æš‚åœ");
 		break;
 				 }
 	case SYSTEM_PAUSE:{
-		GetDlgItem(IDPAUSE)->SetWindowText(L"¼ÌĞø");
+		GetDlgItem(IDPAUSE)->SetWindowText(L"ç»§ç»­");
 		break;
 				 }
 	case SYSTEM_PROCESS:{
@@ -843,7 +854,7 @@ void CTIandSIDlg::SetState(Systemstate state)
 		GetDlgItem(IDPAUSE)->EnableWindow(TRUE);
 		GetDlgItem(IDSTOP)->EnableWindow(TRUE);
 		GetDlgItem(IDC_URLLIST_ADD)->EnableWindow(FALSE);
-		GetDlgItem(IDPAUSE)->SetWindowText(L"ÔİÍ£");
+		GetDlgItem(IDPAUSE)->SetWindowText(L"æš‚åœ");
 		state=SYSTEM_PROCESS;
 		break;
 				 }
@@ -861,11 +872,11 @@ void CTIandSIDlg::OnBnClickedResult()
 void CTIandSIDlg::OnDropFiles(HDROP hDropInfo)
 {
 	LPTSTR pFilePathName =(LPTSTR)malloc(500);
-	::DragQueryFile(hDropInfo, 0, pFilePathName,500);  // »ñÈ¡ÍÏ·ÅÎÄ¼şµÄÍêÕûÎÄ¼şÃû£¬×î¹Ø¼ü£¡
+	::DragQueryFile(hDropInfo, 0, pFilePathName,500);  // è·å–æ‹–æ”¾æ–‡ä»¶çš„å®Œæ•´æ–‡ä»¶åï¼Œæœ€å…³é”®ï¼
 
 	m_inputurl.SetWindowText(pFilePathName);
 
-	::DragFinish(hDropInfo);   // ×¢ÒâÕâ¸ö²»ÄÜÉÙ£¬ËüÓÃÓÚÊÍ·ÅWindows Îª´¦ÀíÎÄ¼şÍÏ·Å¶ø·ÖÅäµÄÄÚ´æ
+	::DragFinish(hDropInfo);   // æ³¨æ„è¿™ä¸ªä¸èƒ½å°‘ï¼Œå®ƒç”¨äºé‡Šæ”¾Windows ä¸ºå¤„ç†æ–‡ä»¶æ‹–æ”¾è€Œåˆ†é…çš„å†…å­˜
 	free(pFilePathName);
 
 	CDialogEx::OnDropFiles(hDropInfo);
@@ -897,7 +908,7 @@ void CTIandSIDlg::OnWebsite()
 void CTIandSIDlg::OnUrllistQuickadd()
 {
 	CFileDialog dlg(TRUE,NULL,NULL,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT|OFN_ALLOWMULTISELECT); 
-	//½â¾öÎÄ¼şÃû×Ö·û´®²»¹»³¤,¸ü¸Ä»º³åÇø´óĞ¡
+	//è§£å†³æ–‡ä»¶åå­—ç¬¦ä¸²ä¸å¤Ÿé•¿,æ›´æ”¹ç¼“å†²åŒºå¤§å°
 	TCHAR szLargeBuf[8192]={0}; 
 	dlg.m_ofn.lpstrFile =szLargeBuf;
 	dlg.m_ofn.nMaxFile=8192;
@@ -915,7 +926,7 @@ void CTIandSIDlg::OnUrllistQuickadd()
 
 void CTIandSIDlg::OnCancel()
 {
-	if(IDOK==AfxMessageBox(L"È·¶¨ÍË³ö£¿",MB_OKCANCEL|MB_ICONINFORMATION)){
+	if(IDOK==AfxMessageBox(L"ç¡®å®šé€€å‡ºï¼Ÿ",MB_OKCANCEL|MB_ICONINFORMATION)){
 		resultdlg->DestroyWindow();
 		delete resultdlg;
 		CDialogEx::OnCancel();
