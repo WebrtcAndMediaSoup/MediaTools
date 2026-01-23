@@ -187,7 +187,7 @@ BOOL CTIandSIDlg::OnInitDialog()
 
 	m_draw.InsertString(0,L"SI");
 	m_draw.InsertString(1,L"TI");
-	m_draw.InsertString(2,L"不显示");
+	m_draw.InsertString(2,L"显示Y");
 	m_draw.SetCurSel(0);
 
 	SetState(SYSTEM_PREPARE);
@@ -519,6 +519,20 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 
 	/********************计算SI***********************/
 	memcpy(pFrame,ydata,nYSize);
+
+
+	if (dlg->m_draw.GetCurSel() == 2) {
+
+		SDL_LockYUVOverlay(dlg->sdlparam.bmp);
+		dlg->sdlparam.bmp->pixels[0] = (unsigned char*)ydata;
+		dlg->sdlparam.bmp->pixels[2] = NewUVBuffer;
+		dlg->sdlparam.bmp->pixels[1] = NewUVBuffer + nUVSize / 2;
+		dlg->sdlparam.bmp->pitches[0] = nWidth;
+		dlg->sdlparam.bmp->pitches[2] = nWidth / 2;
+		dlg->sdlparam.bmp->pitches[1] = nWidth / 2;
+		SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);
+		SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect);
+	}
 
 	for(j = 0; j < nHeight; j++)
 		for(i = 0; i < nWidth; i++)
