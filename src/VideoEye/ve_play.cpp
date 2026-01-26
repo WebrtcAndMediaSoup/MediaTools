@@ -101,7 +101,7 @@ typedef struct VideoPicture {
 	double pts;                                  ///< presentation time stamp for this picture
 	int64_t pos;                                 ///< byte position in file
 	int skip;
-	SDL_Overlay *bmp;
+	SDL_Texture *bmp;
 	int width, height; /* source height & width */
 	AVRational sample_aspect_ratio;
 	int allocated;
@@ -329,7 +329,8 @@ int is_stretch=1;
 static int exit_remark=0;
 
 //---------------------------------
-static SDL_Surface *screen;
+static SDL_Renderer * renderer;
+SDL_Window* win;
 
 //视频帧索引
 int vframe_index=0;
@@ -830,7 +831,7 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block)
 	return ret;
 }
 
-static inline void fill_rectangle(SDL_Surface *screen,
+static inline void fill_rectangle(SDL_Renderer *renderer,
 	int x, int y, int w, int h, int color)
 {
 	SDL_Rect rect;
@@ -838,7 +839,8 @@ static inline void fill_rectangle(SDL_Surface *screen,
 	rect.y = y;
 	rect.w = w;
 	rect.h = h;
-	SDL_FillRect(screen, &rect, color);
+	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 255);
+	SDL_RenderFillRect(renderer, &rect);
 }
 
 #define ALPHA_BLEND(a, oldp, newp, s)\
@@ -1118,32 +1120,21 @@ static void video_image_display(VideoState *is)
 {
 	VideoPicture *vp;
 	SubPicture *sp;
-	AVPicture pict;
 	SDL_Rect rect;
 	int i;
 
 	vp = &is->pictq[is->pictq_rindex];
 	if (vp->bmp) {
+		// SDL 2.0: Clear and prepare to render
+		SDL_RenderClear(renderer);
+
 		if (is->subtitle_st) {
 			if (is->subpq_size > 0) {
 				sp = &is->subpq[is->subpq_rindex];
 
 				if (vp->pts >= sp->pts + ((float) sp->sub.start_display_time / 1000)) {
-					SDL_LockYUVOverlay (vp->bmp);
-					//一般不会执行此处-----------------
-					pict.data[0] = vp->bmp->pixels[0];
-					pict.data[1] = vp->bmp->pixels[2];
-					pict.data[2] = vp->bmp->pixels[1];
-
-					pict.linesize[0] = vp->bmp->pitches[0];
-					pict.linesize[1] = vp->bmp->pitches[2];
-					pict.linesize[2] = vp->bmp->pitches[1];
-
-					for (i = 0; i < sp->sub.num_rects; i++)
-						blend_subrect(&pict, sp->sub.rects[i],
-						vp->bmp->w, vp->bmp->h);
-
-					SDL_UnlockYUVOverlay (vp->bmp);
+					// SDL 2.0: Note: subtitle blending would need to be implemented differently
+					// For now, we skip subtitle blending with textures
 				}
 			}
 		}
@@ -1153,7 +1144,9 @@ static void video_image_display(VideoState *is)
 		}else if(is_stretch==1){
 			calculate_display_rect_f(&rect, is->xleft, is->ytop, is->width, is->height, vp);
 		}
-		SDL_DisplayYUVOverlay(vp->bmp, &rect);
+		// SDL 2.0: Render texture instead of overlay
+		SDL_RenderCopy(renderer, vp->bmp, NULL, &rect);
+		SDL_RenderPresent(renderer);
 	}
 }
 
@@ -1215,13 +1208,13 @@ static void video_audio_display(VideoState *s)
 		i_start = s->last_i_start;
 	}
 
-	bgcolor = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
+	bgcolor = (0x00 << 16) | (0x00 << 8) | 0x00;
 	if (s->show_mode == SHOW_MODE_WAVES) {
-		fill_rectangle(screen,
+		fill_rectangle(renderer,
 			s->xleft, s->ytop, s->width, s->height,
 			bgcolor);
 
-		fgcolor = SDL_MapRGB(screen->format, 0xff, 0xff, 0xff);
+		fgcolor = (0xff << 16) | (0xff << 8) | 0xff;
 
 		/* total height for one channel */
 		h = s->height / nb_display_channels;
@@ -1238,7 +1231,7 @@ static void video_audio_display(VideoState *s)
 				} else {
 					ys = y1;
 				}
-				fill_rectangle(screen,
+				fill_rectangle(renderer,
 					s->xleft + x, ys, 1, y,
 					fgcolor);
 				i += channels;
@@ -1247,15 +1240,15 @@ static void video_audio_display(VideoState *s)
 			}
 		}
 
-		fgcolor = SDL_MapRGB(screen->format, 0x00, 0x00, 0xff);
+		fgcolor = (0x00 << 16) | (0x00 << 8) | 0xff;
 
 		for (ch = 1; ch < nb_display_channels; ch++) {
 			y = s->ytop + ch * h;
-			fill_rectangle(screen,
+			fill_rectangle(renderer,
 				s->xleft, y, s->width, 1,
 				fgcolor);
 		}
-		SDL_UpdateRect(screen, s->xleft, s->ytop, s->width, s->height);
+		SDL_RenderPresent(renderer);  // SDL 2.0: Present instead of UpdateRect
 	} else {
 		nb_display_channels= FFMIN(nb_display_channels, 2);
 		if (rdft_bits != s->rdft_bits) {
@@ -1287,14 +1280,14 @@ static void video_audio_display(VideoState *s)
 				+ data[1][2 * y + 1] * data[1][2 * y + 1])) : a;
 				a = FFMIN(a, 255);
 				b = FFMIN(b, 255);
-				fgcolor = SDL_MapRGB(screen->format, a, b, (a + b) / 2);
+				fgcolor = (a << 16) | (b << 8) | ((a + b) / 2);
 
-				fill_rectangle(screen,
+				fill_rectangle(renderer,
 					s->xpos, s->height-y, 1, 1,
 					fgcolor);
 			}
 		}
-		SDL_UpdateRect(screen, s->xpos, s->ytop, 1, s->height);
+		SDL_RenderPresent(renderer);  // SDL 2.0: Present instead of UpdateRect
 		if (!s->paused)
 			s->xpos++;
 		if (s->xpos >= s->width)
@@ -1321,7 +1314,7 @@ static void stream_close(VideoState *is)
 		avfilter_unref_bufferp(&vp->picref);
 #endif
 		if (vp->bmp) {
-			SDL_FreeYUVOverlay(vp->bmp);
+			SDL_DestroyTexture(vp->bmp);  // SDL 2.0: DestroyTexture instead of FreeYUVOverlay
 			vp->bmp = NULL;
 		}
 	}
@@ -1405,13 +1398,9 @@ static void sigterm_handler(int sig)
 //SDL初始化设置
 static int video_open(VideoState *is, int force_set_video_mode)
 {
-	int flags = SDL_HWSURFACE | SDL_ASYNCBLIT | SDL_HWACCEL;
-	int w,h;
+	int w, h;
 	VideoPicture *vp = &is->pictq[is->pictq_rindex];
 	SDL_Rect rect;
-
-	if (is_full_screen) flags |= SDL_FULLSCREEN;
-	else                flags |= SDL_RESIZABLE;
 
 	if (is_full_screen && fs_screen_width) {
 		w = fs_screen_width;
@@ -1427,22 +1416,32 @@ static int video_open(VideoState *is, int force_set_video_mode)
 		w = 640;
 		h = 480;
 	}
-	if (screen && is->width == screen->w && screen->w == w
-		&& is->height== screen->h && screen->h == h && !force_set_video_mode)
-		return 0;
-	screen = SDL_SetVideoMode(w, h, 0, flags);
-	if (!screen) {
-		AfxMessageBox(_T("SDL: could not set video mode - exiting\n"));
-		do_exit(is);
-	}
-	//注意：设置视频窗口标题！
-	window_title="Video Window";
-	if (!window_title)
-		window_title = input_filename;
-	SDL_WM_SetCaption(window_title, window_title);
 
-	is->width  = screen->w;
-	is->height = screen->h;
+	// SDL 2.0: Check if window exists and size matches
+	if (renderer && is->width == w && is->height == h && !force_set_video_mode)
+		return 0;
+
+	if (!renderer) {
+		// SDL 2.0: Create window and renderer
+		win = SDL_CreateWindow(window_title ? window_title : input_filename ? input_filename : "Video Window",
+			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+			w, h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
+		if (!win) {
+			AfxMessageBox(_T("SDL: could not create window - exiting\n"));
+			do_exit(is);
+		}
+		renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+		if (!renderer) {
+			AfxMessageBox(_T("SDL: could not create renderer - exiting\n"));
+			do_exit(is);
+		}
+		SDL_ShowWindow(win);
+	} else {
+		SDL_SetWindowSize(win, w, h);
+	}
+
+	is->width = w;
+	is->height = h;
 
 	return 0;
 }
@@ -1450,7 +1449,7 @@ static int video_open(VideoState *is, int force_set_video_mode)
 /* display the current picture, if any */
 static void video_display(VideoState *is)
 {
-	if (!screen)
+	if (!win)
 		video_open(is, 0);
 	if (is->audio_st && is->show_mode != SHOW_MODE_VIDEO)
 		video_audio_display(is);
@@ -1805,7 +1804,7 @@ static void alloc_picture(VideoState *is)
 	vp = &is->pictq[is->pictq_windex];
 
 	if (vp->bmp)
-		SDL_FreeYUVOverlay(vp->bmp);
+		SDL_DestroyTexture(vp->bmp);
 
 #if CONFIG_AVFILTER
 	avfilter_unref_bufferp(&vp->picref);
@@ -1813,15 +1812,13 @@ static void alloc_picture(VideoState *is)
 
 	video_open(is, 0);
 
-	vp->bmp = SDL_CreateYUVOverlay(vp->width, vp->height,
-		SDL_YV12_OVERLAY,
-		screen);
-	if (!vp->bmp || vp->bmp->pitches[0] < vp->width) {
-		/* SDL allocates a buffer smaller than requested if the video
-		* overlay hardware is unable to support the requested size. */
-		fprintf(stderr, "Error: the video system does not support an image\n"
-			"size of %dx%d pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-			"to reduce the image size.\n", vp->width, vp->height );
+	// SDL 2.0: Create YV12 texture instead of overlay
+	vp->bmp = SDL_CreateTexture(renderer,
+		SDL_PIXELFORMAT_YV12,
+		SDL_TEXTUREACCESS_STREAMING,
+		vp->width, vp->height);
+	if (!vp->bmp) {
+		fprintf(stderr, "Error: could not create texture for %dx%d pixels.\n", vp->width, vp->height);
 		do_exit(is);
 	}
 
@@ -1895,17 +1892,18 @@ static int queue_picture(VideoState *is, AVFrame *src_frame, double pts1, int64_
 			SDL_PushEvent(&event);
 
 			/* wait until the picture is allocated */
-			SDL_LockMutex(is->pictq_mutex);
-			while (!vp->allocated && !is->videoq.abort_request) {
+		SDL_LockMutex(is->pictq_mutex);
+		while (!vp->allocated && !is->videoq.abort_request) {
+			SDL_CondWait(is->pictq_cond, is->pictq_mutex);
+		}
+		/* if the queue is aborted, we have to pop the pending ALLOC event or wait for the allocation to complete */
+		if (is->videoq.abort_request) {
+			SDL_Event event_alloc;
+			while (SDL_PeepEvents(&event_alloc, 1, SDL_GETEVENT, FF_ALLOC_EVENT, FF_ALLOC_EVENT) == 0) {
 				SDL_CondWait(is->pictq_cond, is->pictq_mutex);
 			}
-			/* if the queue is aborted, we have to pop the pending ALLOC event or wait for the allocation to complete */
-			if (is->videoq.abort_request && SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENTMASK(FF_ALLOC_EVENT)) != 1) {
-				while (!vp->allocated) {
-					SDL_CondWait(is->pictq_cond, is->pictq_mutex);
-				}
-			}
-			SDL_UnlockMutex(is->pictq_mutex);
+		}
+		SDL_UnlockMutex(is->pictq_mutex);
 
 			if (is->videoq.abort_request)
 				return -1;
@@ -1920,26 +1918,39 @@ static int queue_picture(VideoState *is, AVFrame *src_frame, double pts1, int64_
 #endif
 
 		/* get a pointer on the bitmap */
-		SDL_LockYUVOverlay (vp->bmp);
+		// SDL 2.0: Lock texture instead of overlay
+		void *pixels;
+		int pitch;
+		SDL_LockTexture(vp->bmp, NULL, &pixels, &pitch);
+
+		// SDL 2.0: Calculate YV12 planes from linear texture memory
+		uint8_t *y_plane = (uint8_t*)pixels;
+		uint8_t *u_plane = y_plane + vp->width * vp->height;
+		uint8_t *v_plane = u_plane + (vp->width * vp->height) / 4;
+
 		//显示YUV数据
 		//设置输出格式-----------------
 		switch (is->v_show_mode){
-		case SHOW_MODE_YUV:	pict.data[0] = vp->bmp->pixels[0];
-			pict.data[1] = vp->bmp->pixels[2];
-			pict.data[2] = vp->bmp->pixels[1];
+		case SHOW_MODE_YUV:
+			pict.data[0] = y_plane;
+			pict.data[1] = v_plane;  // YV12: V plane comes before U plane
+			pict.data[2] = u_plane;
 
-			pict.linesize[0] = vp->bmp->pitches[0];
-			pict.linesize[1] = vp->bmp->pitches[2];
-			pict.linesize[2] = vp->bmp->pitches[1];
+			pict.linesize[0] = vp->width;
+			pict.linesize[1] = vp->width / 2;
+			pict.linesize[2] = vp->width / 2;
 			break;
-		case SHOW_MODE_Y:	pict.data[0] = vp->bmp->pixels[0];
-			pict.linesize[0] = vp->bmp->pitches[0];
+		case SHOW_MODE_Y:
+			pict.data[0] = y_plane;
+			pict.linesize[0] = vp->width;
 			break;
-		case SHOW_MODE_U:	pict.data[1] = vp->bmp->pixels[2];
-			pict.linesize[1] = vp->bmp->pitches[2];
+		case SHOW_MODE_U:
+			pict.data[1] = u_plane;
+			pict.linesize[1] = vp->width / 2;
 			break;
-		case SHOW_MODE_V:	pict.data[2] = vp->bmp->pixels[1];
-			pict.linesize[2] = vp->bmp->pitches[1];
+		case SHOW_MODE_V:
+			pict.data[2] = v_plane;
+			pict.linesize[2] = vp->width / 2;
 			break;
 		}
 		//输出YUV数据-----------------
@@ -2039,7 +2050,8 @@ static int queue_picture(VideoState *is, AVFrame *src_frame, double pts1, int64_
 			0, vp->height, pict.data, pict.linesize);
 #endif
 		/* update the bitmap content */
-		SDL_UnlockYUVOverlay(vp->bmp);
+		// SDL 2.0: Unlock texture instead of overlay
+		SDL_UnlockTexture(vp->bmp);
 
 		vp->pts = pts;
 		vp->pos = pos;
@@ -2854,14 +2866,14 @@ static int stream_component_open(VideoState *is, int stream_index)
 
 		packet_queue_start(&is->videoq);
 		//视频线程
-		is->video_tid = SDL_CreateThread(video_thread, is);
+		is->video_tid = SDL_CreateThread(video_thread, "video_thread", is);
 		break;
 	case AVMEDIA_TYPE_SUBTITLE:
 		is->subtitle_stream = stream_index;
 		is->subtitle_st = ic->streams[stream_index];
 		packet_queue_start(&is->subtitleq);
 
-		is->subtitle_tid = SDL_CreateThread(subtitle_thread, is);
+		is->subtitle_tid = SDL_CreateThread(subtitle_thread, "subtitle_thread", is);
 		break;
 	default:
 		break;
@@ -3120,7 +3132,7 @@ static int read_thread(void *arg)
 	if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
 		ret = stream_component_open(is, st_index[AVMEDIA_TYPE_VIDEO]);
 	}
-	is->refresh_tid = SDL_CreateThread(refresh_thread, is);
+	is->refresh_tid = SDL_CreateThread(refresh_thread, "refresh_thread", is);
 
 	if (is->show_mode == SHOW_MODE_NONE)
 		is->show_mode = ret >= 0 ? (VideoState::ShowMode)SHOW_MODE_VIDEO : (VideoState::ShowMode)SHOW_MODE_RDFT;
@@ -3410,7 +3422,7 @@ static VideoState *stream_open(const char *filename, AVInputFormat *iformat)
 
 	is->av_sync_type = av_sync_type;
 	//解码线程
-	is->read_tid     = SDL_CreateThread(read_thread, is);
+	is->read_tid     = SDL_CreateThread(read_thread, "read_thread", is);
 	if (!is->read_tid) {
 		av_free(is);
 		return NULL;
@@ -3531,9 +3543,9 @@ void ve_aspectratio(int num,int den){
 	int h=g_is->height;
 	int w_re=h*num/den;
 	SDL_Event event;
-	event.type = SDL_VIDEORESIZE;
-	event.resize.w=w_re;
-	event.resize.h=h;
+	event.type = SDL_WINDOWEVENT;
+	event.window.data1 =w_re;
+	event.window.data2=h;
 	SDL_PushEvent(&event);
 }
 
@@ -3541,9 +3553,9 @@ void ve_size(int percentage){
 	int w=g_is->ic->streams[g_is->video_stream]->codec->width;
 	int h=g_is->ic->streams[g_is->video_stream]->codec->height;
 	SDL_Event event;
-	event.type = SDL_VIDEORESIZE;
-	event.resize.w=w*percentage/100;
-	event.resize.h=h*percentage/100;
+	event.type = SDL_WINDOWEVENT;
+	event.window.data1 = w*percentage/100;
+	event.window.data2 = h*percentage/100;
 	SDL_PushEvent(&event);
 }
 
@@ -3592,7 +3604,7 @@ void ve_stretch(int stretch){
 
 static void toggle_audio_display(VideoState *is,int mode)
 {
-	int bgcolor = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
+	int bgcolor = (0x00 << 16) | (0x00 << 8) | 0x00;
 	//is->show_mode = (VideoState::ShowMode)((is->show_mode + 1) % SHOW_MODE_NB);
 	switch(mode){
 	case SHOW_MODE_VIDEO:is->show_mode=(VideoState::ShowMode)SHOW_MODE_VIDEO;break;
@@ -3600,10 +3612,10 @@ static void toggle_audio_display(VideoState *is,int mode)
 	case SHOW_MODE_RDFT:is->show_mode=(VideoState::ShowMode)SHOW_MODE_RDFT;break;
 	default:is->show_mode=(VideoState::ShowMode)SHOW_MODE_VIDEO;break;
 	}
-	fill_rectangle(screen,
+	fill_rectangle(renderer,
 		is->xleft, is->ytop, is->width, is->height,
 		bgcolor);
-	SDL_UpdateRect(screen, is->xleft, is->ytop, is->width, is->height);
+	SDL_RenderPresent(renderer);  // SDL 2.0: Present instead of UpdateRect
 }
 
 /* handle an event sent by the GUI */
@@ -3626,7 +3638,7 @@ static void event_loop(VideoState *cur_stream)
 		SDL_WaitEvent(&event);
 		switch (event.type) {
 		case SDL_KEYDOWN:
-			if (exit_on_keydown) 
+			if (exit_on_keydown)
 			{
 				do_exit(cur_stream);
 				break;
@@ -3662,19 +3674,19 @@ static void event_loop(VideoState *cur_stream)
 				break;
 				//修改了一下，三中显示模式分成了三个键
 			case SDLK_w:
-				toggle_audio_display(cur_stream,SHOW_MODE_VIDEO);
+				toggle_audio_display(cur_stream, SHOW_MODE_VIDEO);
 				cur_stream->force_refresh = 1;
 				break;
 			case SDLK_e:
-				toggle_audio_display(cur_stream,SHOW_MODE_WAVES);
+				toggle_audio_display(cur_stream, SHOW_MODE_WAVES);
 				cur_stream->force_refresh = 1;
 				break;
 			case SDLK_r:
-				toggle_audio_display(cur_stream,SHOW_MODE_RDFT);
+				toggle_audio_display(cur_stream, SHOW_MODE_RDFT);
 				cur_stream->force_refresh = 1;
 				break;
 			case SDLK_y:
-				cur_stream->v_show_mode=SHOW_MODE_Y;
+				cur_stream->v_show_mode = SHOW_MODE_Y;
 				break;
 			case SDLK_PAGEUP:
 				incr = 600.0;
@@ -3694,13 +3706,15 @@ static void event_loop(VideoState *cur_stream)
 				goto do_seek;
 			case SDLK_DOWN:
 				incr = -60.0;
-do_seek:
+			do_seek:
 				if (seek_by_bytes) {
 					if (cur_stream->video_stream >= 0 && cur_stream->video_current_pos >= 0) {
 						pos = cur_stream->video_current_pos;
-					} else if (cur_stream->audio_stream >= 0 && cur_stream->audio_pkt.pos >= 0) {
+					}
+					else if (cur_stream->audio_stream >= 0 && cur_stream->audio_pkt.pos >= 0) {
 						pos = cur_stream->audio_pkt.pos;
-					} else
+					}
+					else
 						pos = avio_tell(cur_stream->ic->pb);
 					if (cur_stream->ic->bit_rate)
 						incr *= cur_stream->ic->bit_rate / 8.0;
@@ -3708,108 +3722,109 @@ do_seek:
 						incr *= 180000.0;
 					pos += incr;
 					stream_seek(cur_stream, pos, incr, 1);
-				} else {
+				}
+				else {
 					pos = get_master_clock(cur_stream);
 					pos += incr;
 					stream_seek(cur_stream, (int64_t)(pos * AV_TIME_BASE), (int64_t)(incr * AV_TIME_BASE), 0);
 				}
 				break;
+				//鼠标单击
+			case SDL_MOUSEBUTTONDOWN:
+				if (exit_on_mousedown) {
+					do_exit(cur_stream);
+					break;
+				}
+			case SDL_MOUSEMOTION:
+				if (event.type == SDL_MOUSEBUTTONDOWN) {
+					x = event.button.x;
+				}
+				else {
+					if (event.motion.state != SDL_PRESSED)
+						break;
+					x = event.motion.x;
+				}
+				if (seek_by_bytes || cur_stream->ic->duration <= 0) {
+					uint64_t size = avio_size(cur_stream->ic->pb);
+					stream_seek(cur_stream, size * x / cur_stream->width, 0, 1);
+				}
+				else {
+					int64_t ts;
+					int ns, hh, mm, ss;
+					int tns, thh, tmm, tss;
+					tns = cur_stream->ic->duration / 1000000LL;
+					thh = tns / 3600;
+					tmm = (tns % 3600) / 60;
+					tss = (tns % 60);
+					frac = x / cur_stream->width;
+					ns = frac * tns;
+					hh = ns / 3600;
+					mm = (ns % 3600) / 60;
+					ss = (ns % 60);
+					fprintf(stderr, "Seek to %2.0f%% (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)       \n", frac * 100,
+						hh, mm, ss, thh, tmm, tss);
+					ts = frac * cur_stream->ic->duration;
+					if (cur_stream->ic->start_time != AV_NOPTS_VALUE)
+						ts += cur_stream->ic->start_time;
+					stream_seek(cur_stream, ts, 0, 0);
+				}
+				break;
+			case SDL_WINDOWEVENT:
+				if (event.window.event == SDL_WINDOWEVENT_EXPOSED) {
+					cur_stream->force_refresh = 1;
+				}
+				if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+					screen_width = cur_stream->width = event.window.data1;
+					screen_height = cur_stream->height = event.window.data2;
+					SDL_SetWindowSize(win, screen_width, screen_height);
+					//Refresh----------
+					int bgcolor = (0x00 << 16) | (0x00 << 8) | 0x00;
+					fill_rectangle(renderer, cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height, bgcolor);
+					SDL_RenderPresent(renderer);
+					//-----------------
+					cur_stream->force_refresh = 1;
+				}
+				break;
+			case SDL_QUIT:
+			case FF_QUIT_EVENT:
+				//相当于单击“停止”
+				dlg->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_STOP, BN_CLICKED), NULL);
+				do_exit(cur_stream);
+				break;
+			case FF_ALLOC_EVENT:
+				alloc_picture((VideoState*)(event.user.data1));
+				break;
+			case FF_REFRESH_EVENT:
+				video_refresh(event.user.data1);
+				cur_stream->refresh = 0;
+				break;
+			case VE_SEEK_BAR_EVENT: {
+				if (seek_by_bytes || cur_stream->ic->duration <= 0) {
+					uint64_t size = avio_size(cur_stream->ic->pb);
+					stream_seek(cur_stream, size * seek_bar_pos / 1000, 0, 1);
+				}
+				else {
+					int64_t ts;
+					frac = (double)seek_bar_pos / 1000;
+					ts = frac * cur_stream->ic->duration;
+					if (cur_stream->ic->start_time != AV_NOPTS_VALUE)
+						ts += cur_stream->ic->start_time;
+					stream_seek(cur_stream, ts, 0, 0);
+				}
+
+				break;
+			}
+			case VE_STRETCH_EVENT: {
+				//刷新--------------------
+				int bgcolor = (0x00 << 16) | (0x00 << 8) | 0x00;
+				fill_rectangle(renderer, cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height, bgcolor);
+				SDL_RenderPresent(renderer);
+				//--
+				break;
+			}
 			default:
 				break;
 			}
-			break;
-		case SDL_VIDEOEXPOSE:
-			cur_stream->force_refresh = 1;
-			break;
-			//鼠标单击
-		case SDL_MOUSEBUTTONDOWN:
-			if (exit_on_mousedown) {
-				do_exit(cur_stream);
-				break;
-			}
-		case SDL_MOUSEMOTION:
-			if (event.type == SDL_MOUSEBUTTONDOWN) {
-				x = event.button.x;
-			} else {
-				if (event.motion.state != SDL_PRESSED)
-					break;
-				x = event.motion.x;
-			}
-			if (seek_by_bytes || cur_stream->ic->duration <= 0) {
-				uint64_t size =  avio_size(cur_stream->ic->pb);
-				stream_seek(cur_stream, size*x/cur_stream->width, 0, 1);
-			} else {
-				int64_t ts;
-				int ns, hh, mm, ss;
-				int tns, thh, tmm, tss;
-				tns  = cur_stream->ic->duration / 1000000LL;
-				thh  = tns / 3600;
-				tmm  = (tns % 3600) / 60;
-				tss  = (tns % 60);
-				frac = x / cur_stream->width;
-				ns   = frac * tns;
-				hh   = ns / 3600;
-				mm   = (ns % 3600) / 60;
-				ss   = (ns % 60);
-				fprintf(stderr, "Seek to %2.0f%% (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)       \n", frac*100,
-					hh, mm, ss, thh, tmm, tss);
-				ts = frac * cur_stream->ic->duration;
-				if (cur_stream->ic->start_time != AV_NOPTS_VALUE)
-					ts += cur_stream->ic->start_time;
-				stream_seek(cur_stream, ts, 0, 0);
-			}
-			break;
-		case SDL_VIDEORESIZE:{
-			screen = SDL_SetVideoMode(event.resize.w, event.resize.h, 0,
-				SDL_HWSURFACE|SDL_RESIZABLE|SDL_ASYNCBLIT|SDL_HWACCEL);
-			screen_width  = cur_stream->width  = event.resize.w;
-			screen_height = cur_stream->height = event.resize.h;
-			//Refresh----------
-			int bgcolor = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
-			fill_rectangle(screen,cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height,bgcolor);
-			SDL_UpdateRect(screen, cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height);
-			//-----------------
-			cur_stream->force_refresh = 1;
-			break;
-			}
-		case SDL_QUIT:
-		case FF_QUIT_EVENT:
-			//相当于单击“停止”
-			dlg->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_STOP, BN_CLICKED), NULL);
-			do_exit(cur_stream);
-			break;
-		case FF_ALLOC_EVENT:
-			alloc_picture((VideoState *)(event.user.data1));
-			break;
-		case FF_REFRESH_EVENT:
-			video_refresh(event.user.data1);
-			cur_stream->refresh = 0;
-			break;
-		case VE_SEEK_BAR_EVENT:{
-			if (seek_by_bytes || cur_stream->ic->duration <= 0) {
-				uint64_t size =  avio_size(cur_stream->ic->pb);
-				stream_seek(cur_stream, size*seek_bar_pos/1000, 0, 1);
-			} else {
-				int64_t ts;
-				frac=(double)seek_bar_pos/1000;
-				ts = frac * cur_stream->ic->duration;
-				if (cur_stream->ic->start_time != AV_NOPTS_VALUE)
-					ts += cur_stream->ic->start_time;
-				stream_seek(cur_stream, ts, 0, 0);
-			}
-
-			break;
-							   }
-		case VE_STRETCH_EVENT:{
-			//刷新--------------------
-			int bgcolor = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
-			fill_rectangle(screen,cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height,bgcolor);
-			SDL_UpdateRect(screen, cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height);
-			//--
-			break;
-								}
-		default:
-			break;
 		}
 	}
 }
@@ -4087,15 +4102,6 @@ int ve_play(LPVOID lpParam)
 	flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
 	if (audio_disable)
 		flags &= ~SDL_INIT_AUDIO;
-#if 0
-	if (display_disable)
-		SDL_putenv(dummy_videodriver); /* For the event queue, we always need a video driver. */
-#else
-	char sdl_var[128]; 
-	//sprintf(sdl_var, "SDL_WINDOWID=0x%lx", hWnd );//主窗口句柄 
-	SDL_putenv(sdl_var); 
-	char *myvalue = SDL_getenv("SDL_WINDOWID");
-#endif
 
 #if !defined(__MINGW32__) && !defined(__APPLE__)
 	flags |= SDL_INIT_EVENTTHREAD; /* Not supported on Windows or Mac OS X */
@@ -4109,15 +4115,17 @@ int ve_play(LPVOID lpParam)
 
 	if (!display_disable) {
 #if HAVE_SDL_VIDEO_SIZE
-		const SDL_VideoInfo *vi = SDL_GetVideoInfo();
-		fs_screen_width = vi->current_w;
-		fs_screen_height = vi->current_h;
+		// SDL 2.0: Get display mode instead of VideoInfo
+		SDL_DisplayMode dm;
+		if (SDL_GetCurrentDisplayMode(0, &dm) == 0) {
+			fs_screen_width = dm.w;
+			fs_screen_height = dm.h;
+		}
 #endif
 	}
 
-	SDL_EventState(SDL_ACTIVEEVENT, SDL_IGNORE);
-	SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
-	SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
+	// SDL 2.0: Event filtering is done differently - remove old SDL_EventState calls
+	// SDL_ACTIVEEVENT, SDL_SYSWMEVENT, SDL_USEREVENT filtering is not needed in SDL 2.0
 
 	if (av_lockmgr_register(lockmgr)) {
 		AfxMessageBox(_T("Could not initialize lock manager!"));
