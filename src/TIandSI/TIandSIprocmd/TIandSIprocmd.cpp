@@ -42,8 +42,9 @@ extern "C"
 #define REFRESH_EVENT  (SDL_USEREVENT + 1)
 
 typedef struct SDLParam{
-	SDL_Surface *screen; 
-	SDL_Overlay *bmp; 
+	SDL_Window *window;
+	SDL_Renderer *renderer;
+	SDL_Texture *texture;
 	SDL_Rect rect;
 	bool graphically_ti;
 	bool graphically_si;
@@ -64,43 +65,72 @@ int mark_exit=0;
 int show_thread(void *opaque){
 	SDLParam *sdlparam=(SDLParam *)opaque;
 
-	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {  
-		printf( "Could not initialize SDL - %s\n", SDL_GetError()); 
-		return 0;
-	} 
-
-	sdlparam->screen = SDL_SetVideoMode(sdlparam->show_w, sdlparam->show_h, 0, 0);
-	if(!sdlparam->screen) {  
-		printf("SDL: could not set video mode - exiting\n");  
+	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+		printf( "Could not initialize SDL - %s\n", SDL_GetError());
 		return 0;
 	}
-	sdlparam->bmp = SDL_CreateYUVOverlay(sdlparam->pixel_w, sdlparam->pixel_h,SDL_YV12_OVERLAY, sdlparam->screen); 
+
+	sdlparam->window = SDL_CreateWindow("TIandSI",
+		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		sdlparam->show_w, sdlparam->show_h,
+		SDL_WINDOW_SHOWN);
+	if(!sdlparam->window) {
+		printf("SDL: could not create window - exiting\n");
+		return 0;
+	}
+
+	sdlparam->renderer = SDL_CreateRenderer(sdlparam->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	if(!sdlparam->renderer) {
+		printf("SDL: could not create renderer - exiting\n");
+		SDL_DestroyWindow(sdlparam->window);
+		return 0;
+	}
+
+	sdlparam->texture = SDL_CreateTexture(sdlparam->renderer,
+		SDL_PIXELFORMAT_YV12,
+		SDL_TEXTUREACCESS_STREAMING,
+		sdlparam->pixel_w, sdlparam->pixel_h);
+	if(!sdlparam->texture) {
+		printf("SDL: could not create texture - exiting\n");
+		SDL_DestroyRenderer(sdlparam->renderer);
+		SDL_DestroyWindow(sdlparam->window);
+		return 0;
+	}
 
 	if(sdlparam->graphically_si){
-		SDL_WM_SetCaption("Spatial perceptual Information",NULL);
+		SDL_SetWindowTitle(sdlparam->window, "Spatial perceptual Information");
 	}else if(sdlparam->graphically_ti){
-		SDL_WM_SetCaption("Temporal perceptual Information",NULL);
+		SDL_SetWindowTitle(sdlparam->window, "Temporal perceptual Information");
 	}
 
-	sdlparam->rect.x = 0;    
-	sdlparam->rect.y = 0;    
-	sdlparam->rect.w = sdlparam->show_w;    
-	sdlparam->rect.h = sdlparam->show_h;    
+	sdlparam->rect.x = 0;
+	sdlparam->rect.y = 0;
+	sdlparam->rect.w = sdlparam->show_w;
+	sdlparam->rect.h = sdlparam->show_h;
 
 	SDL_Event event;
 	while(mark_exit==0) {
 		SDL_WaitEvent(&event);
 		switch(event.type){
 		case REFRESH_EVENT:{
-			SDL_LockYUVOverlay(sdlparam->bmp);
-			sdlparam->bmp->pixels[0]=(Uint8 *)sdlparam->show_YBuffer;
-			sdlparam->bmp->pixels[2]=(Uint8 *)sdlparam->show_UVBuffer;
-			sdlparam->bmp->pixels[1]=(Uint8 *)sdlparam->show_UVBuffer+sdlparam->pixel_w*sdlparam->pixel_h/4;     
-			sdlparam->bmp->pitches[0]=sdlparam->pixel_w;
-			sdlparam->bmp->pitches[2]=sdlparam->pixel_w/2;   
-			sdlparam->bmp->pitches[1]=sdlparam->pixel_w/2;
-			SDL_UnlockYUVOverlay(sdlparam->bmp); 
-			SDL_DisplayYUVOverlay(sdlparam->bmp, &sdlparam->rect); 
+			Uint8 *pixels[3];
+			int pitches[3];
+			if(SDL_LockTexture(sdlparam->texture, NULL, (void**)&pixels[0], &pitches[0]) == 0) {
+				pixels[0] = (Uint8 *)sdlparam->show_YBuffer;
+				pitches[0] = sdlparam->pixel_w;
+				pixels[2] = (Uint8 *)sdlparam->show_UVBuffer;
+				pitches[2] = sdlparam->pixel_w / 2;
+				pixels[1] = (Uint8 *)sdlparam->show_UVBuffer + sdlparam->pixel_w * sdlparam->pixel_h / 4;
+				pitches[1] = sdlparam->pixel_w / 2;
+
+				SDL_UpdateYUVTexture(sdlparam->texture, NULL,
+					(uint8_t*)sdlparam->show_YBuffer, sdlparam->pixel_w,
+					(uint8_t*)sdlparam->show_UVBuffer + sdlparam->pixel_w * sdlparam->pixel_h / 4, sdlparam->pixel_w / 2,
+					(uint8_t*)sdlparam->show_UVBuffer, sdlparam->pixel_w / 2);
+				SDL_RenderClear(sdlparam->renderer);
+				SDL_RenderCopy(sdlparam->renderer, sdlparam->texture, NULL, &sdlparam->rect);
+				SDL_RenderPresent(sdlparam->renderer);
+			}
 			break;
 						   }
 		case SDL_QUIT:{
@@ -110,6 +140,10 @@ int show_thread(void *opaque){
 
 		}
 	}
+
+	SDL_DestroyTexture(sdlparam->texture);
+	SDL_DestroyRenderer(sdlparam->renderer);
+	SDL_DestroyWindow(sdlparam->window);
 	return 0;
 }
 
@@ -479,7 +513,7 @@ int main(int argc, char* argv[])
 	}
 
 	//------------SDL----------------
-	SDLParam sdlparam={NULL,NULL,{0,0,0,0},graphically_ti,graphically_si,isinterval,NULL,NULL,0,0,0,0};
+	SDLParam sdlparam={NULL,NULL,NULL,{0,0,0,0},graphically_ti,graphically_si,isinterval,NULL,NULL,0,0,0,0};
 	if(graphically_ti==true||graphically_si==true){
 		sdlparam.graphically_si=graphically_si;
 		sdlparam.graphically_ti=graphically_ti;
@@ -492,7 +526,7 @@ int main(int argc, char* argv[])
 		sdlparam.show_UVBuffer=(char *)malloc(sdlparam.pixel_w*sdlparam.pixel_h/2);
 		memset(sdlparam.show_UVBuffer,0x80,sdlparam.pixel_w*sdlparam.pixel_h/2);
 
-		SDL_Thread *video_tid = SDL_CreateThread(show_thread,&sdlparam);
+		SDL_Thread *video_tid = SDL_CreateThread(show_thread,"show_thread",&sdlparam);
 	}
 	//---------------
 
