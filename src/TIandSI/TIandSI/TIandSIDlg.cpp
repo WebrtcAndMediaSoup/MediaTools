@@ -170,23 +170,26 @@ BOOL CTIandSIDlg::OnInitDialog()
 
 	//SDL==========================
 	sdlparam.graphically==true;
-	//SDL_putenv()放在前面
-	char variable[256];   
-	CWnd* pWnd = GetDlgItem(IDC_SCREEN);  //获取图片控件的窗口指针   
-	sprintf(variable,"SDL_WINDOWID=0x%1x",pWnd->GetSafeHwnd()); // 格式化字符串      
-	SDL_putenv(variable); 
 
 	if(SDL_Init(SDL_INIT_VIDEO)) {
-		AfxMessageBox(L"Could not initialize SDL"); 
+		AfxMessageBox(L"Could not initialize SDL");
 		return 0;
-	} 
-
+	}
 
 	CRect screenrect;
 	GetDlgItem(IDC_SCREEN)->GetWindowRect(screenrect);
-	sdlparam.screen = SDL_SetVideoMode(screenrect.Width(), screenrect.Height(), 0, 0);
-	if(!sdlparam.screen) {  
-		AfxMessageBox(L"SDL: could not set video mode");  
+	ScreenToClient(screenrect);
+
+	sdlparam.window = SDL_CreateWindowFrom((void*)GetDlgItem(IDC_SCREEN)->GetSafeHwnd());
+	if(!sdlparam.window) {
+		AfxMessageBox(L"SDL: could not create window from existing window");
+		return 0;
+	}
+
+	sdlparam.renderer = SDL_CreateRenderer(sdlparam.window, -1, SDL_RENDERER_ACCELERATED);
+	if(!sdlparam.renderer) {
+		AfxMessageBox(L"SDL: could not create renderer");
+		SDL_DestroyWindow(sdlparam.window);
 		return 0;
 	}
 
@@ -357,7 +360,14 @@ int CTIandSIDlg::TIandSI(YUVInfo yuvinfo,LPVOID lparam)
 	//cfSIData.Open(strPath + _T("_SIData.y"), CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite);
 
 	//Draw--------------
-	sdlparam.bmp = SDL_CreateYUVOverlay(nWidth, nHeight,SDL_YV12_OVERLAY, sdlparam.screen); 
+	sdlparam.texture = SDL_CreateTexture(sdlparam.renderer,
+		SDL_PIXELFORMAT_YV12,
+		SDL_TEXTUREACCESS_STREAMING,
+		nWidth, nHeight);
+	if(!sdlparam.texture) {
+		AfxMessageBox(L"SDL: could not create texture");
+		return -1;
+	}
 	//FIX
 	dlg->m_progresscurti.SetPos(0);
 	dlg->m_progresscurtitext.SetWindowText(L"0%");
@@ -502,21 +512,19 @@ int CTIandSIDlg::TIandSI(YUVInfo yuvinfo,LPVOID lparam)
 		}
 
 		if(sdlparam.graphically==true){
-			SDL_LockYUVOverlay(sdlparam.bmp);
-			sdlparam.bmp->pixels[0]=NewYBuffer;
-			sdlparam.bmp->pixels[2]=NewUVBuffer;
-			sdlparam.bmp->pixels[1]=NewUVBuffer+nUVSize/2;     
-			sdlparam.bmp->pitches[0]=nWidth;
-			sdlparam.bmp->pitches[2]=nWidth/2;   
-			sdlparam.bmp->pitches[1]=nWidth/2;
-			SDL_UnlockYUVOverlay(sdlparam.bmp); 
+			SDL_UpdateYUVTexture(sdlparam.texture, NULL,
+				NewYBuffer, nWidth,
+				NewUVBuffer + nUVSize/2, nWidth/2,
+				NewUVBuffer, nWidth/2);
+			SDL_RenderClear(sdlparam.renderer);
 			CRect screenrect;
 			dlg->GetDlgItem(IDC_SCREEN)->GetWindowRect(screenrect);
-			sdlparam.rect.x = 0;    
-			sdlparam.rect.y = 0;    
-			sdlparam.rect.w = screenrect.Width();    
-			sdlparam.rect.h = screenrect.Height();    
-			SDL_DisplayYUVOverlay(sdlparam.bmp, &sdlparam.rect); 
+			sdlparam.rect.x = 0;
+			sdlparam.rect.y = 0;
+			sdlparam.rect.w = screenrect.Width();
+			sdlparam.rect.h = screenrect.Height();
+			SDL_RenderCopy(sdlparam.renderer, sdlparam.texture, NULL, &sdlparam.rect);
+			SDL_RenderPresent(sdlparam.renderer);
 		}
 		int progress=k*100/nFrameNum;
 		dlg->m_progresscursi.SetPos(progress);
@@ -592,22 +600,19 @@ int CTIandSIDlg::TIandSI(YUVInfo yuvinfo,LPVOID lparam)
 
 
 		if(sdlparam.graphically==true){
-			SDL_LockYUVOverlay(sdlparam.bmp);
-			sdlparam.bmp->pixels[0]=NewYBuffer;
-			sdlparam.bmp->pixels[2]=NewUVBuffer;
-			sdlparam.bmp->pixels[1]=NewUVBuffer+nUVSize/2;     
-			sdlparam.bmp->pitches[0]=nWidth;
-			sdlparam.bmp->pitches[2]=nWidth/2;   
-			sdlparam.bmp->pitches[1]=nWidth/2;
-			SDL_UnlockYUVOverlay(sdlparam.bmp); 
-
+			SDL_UpdateYUVTexture(sdlparam.texture, NULL,
+				NewYBuffer, nWidth,
+				NewUVBuffer + nUVSize/2, nWidth/2,
+				NewUVBuffer, nWidth/2);
+			SDL_RenderClear(sdlparam.renderer);
 			CRect screenrect;
 			dlg->GetDlgItem(IDC_SCREEN)->GetWindowRect(screenrect);
-			sdlparam.rect.x = 0;    
-			sdlparam.rect.y = 0;    
-			sdlparam.rect.w = screenrect.Width();    
-			sdlparam.rect.h = screenrect.Height();    
-			SDL_DisplayYUVOverlay(sdlparam.bmp, &sdlparam.rect); 
+			sdlparam.rect.x = 0;
+			sdlparam.rect.y = 0;
+			sdlparam.rect.w = screenrect.Width();
+			sdlparam.rect.h = screenrect.Height();
+			SDL_RenderCopy(sdlparam.renderer, sdlparam.texture, NULL, &sdlparam.rect);
+			SDL_RenderPresent(sdlparam.renderer);
 		}
 
 		int progress=k*100/(nFrameNum-1);
@@ -617,7 +622,8 @@ int CTIandSIDlg::TIandSI(YUVInfo yuvinfo,LPVOID lparam)
 		dlg->m_progresscurtitext.SetWindowText(progresstext);
 	}
 	//Draw
-	 SDL_FreeYUVOverlay(sdlparam.bmp);
+	SDL_DestroyTexture(sdlparam.texture);
+	sdlparam.texture = NULL;
 	//FIX
 	dlg->m_progresscurti.SetPos(100);
 	dlg->m_progresscurtitext.SetWindowText(L"100%");
