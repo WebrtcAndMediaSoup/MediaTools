@@ -78,8 +78,24 @@ CTIandSIDlg::CTIandSIDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CTIandSIDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	std::cout << "CTIandSIDlg" << std::endl;
+	m_logFile.open("CTIandSI.log", std::ios::app);
+	OnLog("CTIandSIDlg");
 }
+
+CTIandSIDlg::~CTIandSIDlg() {
+	if (m_logFile.is_open()) {
+		m_logFile.close();
+	}
+}
+
+void CTIandSIDlg::OnLog(const std::string& log) {
+	// qDebug() << log.c_str();
+	if (m_logFile.is_open()) {
+		m_logFile << log;
+		m_logFile.flush();
+	}
+}
+
 
 void CTIandSIDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -159,7 +175,7 @@ BOOL CTIandSIDlg::OnInitDialog()
 	//SDL==========================
 	sdlparam.graphically==true;
 	
-	std::cout << "SDL_Init" << std::endl;
+	OnLog("SDL_Init");
 
 	if(SDL_Init(SDL_INIT_VIDEO)) {
 		AfxMessageBox(L"Could not initialize SDL"); 
@@ -170,7 +186,7 @@ BOOL CTIandSIDlg::OnInitDialog()
 	CRect screenrect;
 	GetDlgItem(IDC_SCREEN)->GetWindowRect(screenrect);
 	
-	std::cout << "SDL_CreateWindowFrom" << std::endl;
+	OnLog("SDL_CreateWindowFrom");
 	CWnd* pWnd = GetDlgItem(IDC_SCREEN);
 	sdlparam.window = SDL_CreateWindowFrom((void*)pWnd->GetSafeHwnd());
 	if (!sdlparam.window) {
@@ -178,7 +194,7 @@ BOOL CTIandSIDlg::OnInitDialog()
 		return 0;
 	}
 
-	std::cout << "SDL_CreateRenderer" << std::endl;
+	OnLog("SDL_CreateRenderer");
 	sdlparam.renderer = SDL_CreateRenderer(sdlparam.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (!sdlparam.renderer) {
 		AfxMessageBox(L"SDL: could not create renderer");

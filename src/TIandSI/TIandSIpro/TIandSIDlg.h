@@ -27,6 +27,7 @@
 using std::vector;
 #include <math.h>
 #include "ResultDlg.h"
+#include <fstream>
 
 extern "C"
 {
@@ -57,6 +58,7 @@ class CTIandSIDlg : public CDialogEx
 // 构造
 public:
 	CTIandSIDlg(CWnd* pParent = NULL);	// 标准构造函数
+	~CTIandSIDlg();
 
 // 对话框数据
 	enum { IDD = IDD_TIANDSI_DIALOG };
@@ -119,4 +121,8 @@ public:
 	afx_msg void OnUrllistQuickadd();
 
 	afx_msg void OnCancel();
+
+private:
+	std::ofstream m_logFile;
+	void OnLog(const std::string& log);
 };
