@@ -38,8 +38,9 @@ extern "C"
 
 
 typedef struct SDLParam{
-	SDL_Surface *screen; 
-	SDL_Overlay *bmp; 
+	SDL_Window *window;
+	SDL_Renderer *renderer;
+	SDL_Texture *texture;
 	SDL_Rect rect;
 	bool graphically;
 }SDLParam;

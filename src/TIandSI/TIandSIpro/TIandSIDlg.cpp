@@ -26,7 +26,7 @@
 #include "TIandSIDlg.h"
 #include "afxdialogex.h"
 #include <atlconv.h>
-
+#include <iostream>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -78,6 +78,7 @@ CTIandSIDlg::CTIandSIDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CTIandSIDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	std::cout << "CTIandSIDlg" << std::endl;
 }
 
 void CTIandSIDlg::DoDataExchange(CDataExchange* pDX)
@@ -157,11 +158,8 @@ BOOL CTIandSIDlg::OnInitDialog()
 
 	//SDL==========================
 	sdlparam.graphically==true;
-	//SDL_putenv()放在前面
-	char variable[256];   
-	CWnd* pWnd = GetDlgItem(IDC_SCREEN);  //获取图片控件的窗口指针   
-	sprintf(variable,"SDL_WINDOWID=0x%1x",pWnd->GetSafeHwnd()); // 格式化字符串      
-	SDL_putenv(variable); 
+	
+	std::cout << "SDL_Init" << std::endl;
 
 	if(SDL_Init(SDL_INIT_VIDEO)) {
 		AfxMessageBox(L"Could not initialize SDL"); 
@@ -171,15 +169,28 @@ BOOL CTIandSIDlg::OnInitDialog()
 
 	CRect screenrect;
 	GetDlgItem(IDC_SCREEN)->GetWindowRect(screenrect);
-	sdlparam.screen = SDL_SetVideoMode(screenrect.Width(), screenrect.Height(), 0, 0);
-	if(!sdlparam.screen) {  
-		AfxMessageBox(L"SDL: could not set video mode");  
+	
+	std::cout << "SDL_CreateWindowFrom" << std::endl;
+	CWnd* pWnd = GetDlgItem(IDC_SCREEN);
+	sdlparam.window = SDL_CreateWindowFrom((void*)pWnd->GetSafeHwnd());
+	if (!sdlparam.window) {
+		AfxMessageBox(L"SDL: could not create window");
 		return 0;
 	}
+
+	std::cout << "SDL_CreateRenderer" << std::endl;
+	sdlparam.renderer = SDL_CreateRenderer(sdlparam.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	if (!sdlparam.renderer) {
+		AfxMessageBox(L"SDL: could not create renderer");
+		return 0;
+	}
+
+
 	sdlparam.rect.x=0;
 	sdlparam.rect.y=0;
 	sdlparam.rect.w=screenrect.Width();
 	sdlparam.rect.h=screenrect.Height();
+	sdlparam.texture = NULL;
 
 	//-------------
 	resultdlg=new ResultDlg;
@@ -335,7 +346,7 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 		}
 
 		//Draw
-		dlg->sdlparam.bmp = SDL_CreateYUVOverlay(pCodecCtx->width, pCodecCtx->height,SDL_YV12_OVERLAY, dlg->sdlparam.screen); 
+		dlg->sdlparam.texture = SDL_CreateTexture(dlg->sdlparam.renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, pCodecCtx->width, pCodecCtx->height);
 		//Bar
 		dlg->m_progresscur.SetPos(0);
 		dlg->m_progresscurtext.SetWindowText(L" 0%");
@@ -396,7 +407,10 @@ int CTIandSIDlg::TIandSI(CString url,LPVOID lparam)
 
 
 		//Free
-		SDL_FreeYUVOverlay(dlg->sdlparam.bmp);
+		if (dlg->sdlparam.texture) {
+			SDL_DestroyTexture(dlg->sdlparam.texture);
+			dlg->sdlparam.texture = NULL;
+		}
 		//Bar
 		dlg->m_progresscur.SetPos(100);
 		dlg->m_progresscurtext.SetWindowText(L"100%");
@@ -522,16 +536,10 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 
 
 	if (dlg->m_draw.GetCurSel() == 2) {
-
-		SDL_LockYUVOverlay(dlg->sdlparam.bmp);
-		dlg->sdlparam.bmp->pixels[0] = (unsigned char*)ydata;
-		dlg->sdlparam.bmp->pixels[2] = NewUVBuffer;
-		dlg->sdlparam.bmp->pixels[1] = NewUVBuffer + nUVSize / 2;
-		dlg->sdlparam.bmp->pitches[0] = nWidth;
-		dlg->sdlparam.bmp->pitches[2] = nWidth / 2;
-		dlg->sdlparam.bmp->pitches[1] = nWidth / 2;
-		SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);
-		SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect);
+		SDL_UpdateYUVTexture(dlg->sdlparam.texture, NULL, (uint8_t*)ydata, nWidth, NewUVBuffer, nWidth / 2, NewUVBuffer + nUVSize / 2, nWidth / 2);
+		SDL_RenderClear(dlg->sdlparam.renderer);
+		SDL_RenderCopy(dlg->sdlparam.renderer, dlg->sdlparam.texture, NULL, &dlg->sdlparam.rect);
+		SDL_RenderPresent(dlg->sdlparam.renderer);
 	}
 
 	for(j = 0; j < nHeight; j++)
@@ -639,16 +647,10 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 	si = flSI_S;
 	//画图
 	if (dlg->m_draw.GetCurSel() == 0) {
-
-		SDL_LockYUVOverlay(dlg->sdlparam.bmp);
-		dlg->sdlparam.bmp->pixels[0] = NewYBuffer;
-		dlg->sdlparam.bmp->pixels[2] = NewUVBuffer;
-		dlg->sdlparam.bmp->pixels[1] = NewUVBuffer + nUVSize / 2;
-		dlg->sdlparam.bmp->pitches[0] = nWidth;
-		dlg->sdlparam.bmp->pitches[2] = nWidth / 2;
-		dlg->sdlparam.bmp->pitches[1] = nWidth / 2;
-		SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);
-		SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect);
+		SDL_UpdateYUVTexture(dlg->sdlparam.texture, NULL, NewYBuffer, nWidth, NewUVBuffer, nWidth / 2, NewUVBuffer + nUVSize / 2, nWidth / 2);
+		SDL_RenderClear(dlg->sdlparam.renderer);
+		SDL_RenderCopy(dlg->sdlparam.renderer, dlg->sdlparam.texture, NULL, &dlg->sdlparam.rect);
+		SDL_RenderPresent(dlg->sdlparam.renderer);
 	}
 
 	memcpy(pFrame, prev_ydata, nYSize);
@@ -678,15 +680,10 @@ int CTIandSIDlg::TIandSICal(LPVOID lparam,char* ydata,char* prev_ydata,int width
 	//画图
 	if (dlg->m_draw.GetCurSel() == 1) {
 
-		SDL_LockYUVOverlay(dlg->sdlparam.bmp);
-		dlg->sdlparam.bmp->pixels[0] = NewYBuffer;
-		dlg->sdlparam.bmp->pixels[2] = NewUVBuffer;
-		dlg->sdlparam.bmp->pixels[1] = NewUVBuffer + nUVSize / 2;
-		dlg->sdlparam.bmp->pitches[0] = nWidth;
-		dlg->sdlparam.bmp->pitches[2] = nWidth / 2;
-		dlg->sdlparam.bmp->pitches[1] = nWidth / 2;
-		SDL_UnlockYUVOverlay(dlg->sdlparam.bmp);
-		SDL_DisplayYUVOverlay(dlg->sdlparam.bmp, &dlg->sdlparam.rect);
+		SDL_UpdateYUVTexture(dlg->sdlparam.texture, NULL, NewYBuffer, nWidth, NewUVBuffer, nWidth / 2, NewUVBuffer + nUVSize / 2, nWidth / 2);
+		SDL_RenderClear(dlg->sdlparam.renderer);
+		SDL_RenderCopy(dlg->sdlparam.renderer, dlg->sdlparam.texture, NULL, &dlg->sdlparam.rect);
+		SDL_RenderPresent(dlg->sdlparam.renderer);
 	}
 
 	delete[]pFrame;
