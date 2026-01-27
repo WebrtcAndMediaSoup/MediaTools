@@ -3727,15 +3727,19 @@ static void event_loop(VideoState *cur_stream)
 					pos = get_master_clock(cur_stream);
 					pos += incr;
 					stream_seek(cur_stream, (int64_t)(pos * AV_TIME_BASE), (int64_t)(incr * AV_TIME_BASE), 0);
-				}
+				}	
 				break;
+			default:
+				break;
+			}
+			break;
 				//鼠标单击
-			case SDL_MOUSEBUTTONDOWN:
+		case SDL_MOUSEBUTTONDOWN:
 				if (exit_on_mousedown) {
 					do_exit(cur_stream);
 					break;
 				}
-			case SDL_MOUSEMOTION:
+		case SDL_MOUSEMOTION:
 				if (event.type == SDL_MOUSEBUTTONDOWN) {
 					x = event.button.x;
 				}
@@ -3769,7 +3773,7 @@ static void event_loop(VideoState *cur_stream)
 					stream_seek(cur_stream, ts, 0, 0);
 				}
 				break;
-			case SDL_WINDOWEVENT:
+		case SDL_WINDOWEVENT:
 				if (event.window.event == SDL_WINDOWEVENT_EXPOSED) {
 					cur_stream->force_refresh = 1;
 				}
@@ -3785,20 +3789,20 @@ static void event_loop(VideoState *cur_stream)
 					cur_stream->force_refresh = 1;
 				}
 				break;
-			case SDL_QUIT:
-			case FF_QUIT_EVENT:
+		case SDL_QUIT:
+		case FF_QUIT_EVENT:
 				//相当于单击“停止”
 				dlg->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_STOP, BN_CLICKED), NULL);
 				do_exit(cur_stream);
 				break;
-			case FF_ALLOC_EVENT:
+		case FF_ALLOC_EVENT:
 				alloc_picture((VideoState*)(event.user.data1));
 				break;
-			case FF_REFRESH_EVENT:
+		case FF_REFRESH_EVENT:
 				video_refresh(event.user.data1);
 				cur_stream->refresh = 0;
 				break;
-			case VE_SEEK_BAR_EVENT: {
+		case VE_SEEK_BAR_EVENT: {
 				if (seek_by_bytes || cur_stream->ic->duration <= 0) {
 					uint64_t size = avio_size(cur_stream->ic->pb);
 					stream_seek(cur_stream, size * seek_bar_pos / 1000, 0, 1);
@@ -3814,7 +3818,7 @@ static void event_loop(VideoState *cur_stream)
 
 				break;
 			}
-			case VE_STRETCH_EVENT: {
+		case VE_STRETCH_EVENT: {
 				//刷新--------------------
 				int bgcolor = (0x00 << 16) | (0x00 << 8) | 0x00;
 				fill_rectangle(renderer, cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height, bgcolor);
@@ -3822,9 +3826,8 @@ static void event_loop(VideoState *cur_stream)
 				//--
 				break;
 			}
-			default:
+		default:
 				break;
-			}
 		}
 	}
 }
